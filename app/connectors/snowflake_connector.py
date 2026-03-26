@@ -137,6 +137,31 @@ class SnowflakeConnector(BaseConnector):
         self._cache_time = 0
         logger.info("Snowflake cache invalidated for %s", self._table)
 
+    def execute_sql(self, sql: str, params: Optional[Tuple] = None) -> List[Dict[str, Any]]:
+        """
+        Execute raw SQL directly against Snowflake (used by the intent LLM).
+        """
+        logger.info("Snowflake executing raw SQL: %s with params %s", sql, params)
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        try:
+            if params:
+                cursor.execute(sql, params)
+            else:
+                cursor.execute(sql)
+                
+            if cursor.description is None:
+                return []
+                
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
+        except Exception as e:
+            logger.error("Snowflake SQL execution failed: %s", e)
+            return [{"error": str(e)}]
+        finally:
+            cursor.close()
+
     def get_tool_definitions(self) -> List[Dict[str, Any]]:
         return [
             {

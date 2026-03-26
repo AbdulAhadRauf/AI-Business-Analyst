@@ -35,3 +35,42 @@ def generate_context_string(
 
 def freshness_label() -> str:
     return f"Data as of {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"
+
+
+# ── Custom Business Rules Engine ───────────────────────────────────────
+
+def apply_customer_rules(customer_data: Dict[str, Any], orders_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Evaluates customer data against business rules and returns an enriched context.
+    """
+    total_orders = len(orders_data)
+    
+    # Base context
+    enriched_context = {
+        "customer_id": customer_data.get("customer_id"),
+        "name": customer_data.get("name"),
+        "phone": customer_data.get("phone"),
+        "total_orders": total_orders,
+        "orders": orders_data,
+        "last_order": orders_data[-1] if orders_data else None,
+        "status": "Regular",
+        "rewards": []
+    }
+    
+    rewards = []
+    
+    # Rule 1: Reward Eligibility
+    if total_orders > 10:
+        rewards.append("20% discount coupon")
+        
+    # Rule 2: Cancellation Benefit
+    if any(o.get("status") == "cancelled" for o in orders_data) and total_orders > 5:
+        rewards.append("compensation coupon")
+        
+    enriched_context["rewards"] = rewards
+    
+    # Rule 3: Priority Customer
+    if total_orders > 20:
+        enriched_context["status"] = "VIP"
+            
+    return enriched_context
