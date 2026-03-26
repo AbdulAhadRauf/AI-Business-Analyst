@@ -1,0 +1,34 @@
+# ── Core dependencies ────────────────────────────────────
+fastapi
+uvicorn[standard]
+pydantic>=2
+pydantic-settings
+python-dotenv
+
+# ── Groq (STT + LLM + TTS) ──────────────────────────────
+groq
+
+# ── LangChain / LangGraph (agent framework) ─────────────
+langchain-core
+langchain-groq
+langgraph
+langgraph-checkpoint
+langgraph-prebuilt
+
+# ── FastRTC (real-time voice) ────────────────────────────
+fastrtc
+
+# ── Audio processing ─────────────────────────────────────
+numpy
+
+# ── Config & Database ────────────────────────────────────
+pyyaml
+aiosqlite
+snowflake-connector-python
+
+# ── Logging ──────────────────────────────────────────────
+loguru
+
+# ── Testing ──────────────────────────────────────────────
+pytest
+httpx

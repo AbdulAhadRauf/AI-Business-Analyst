@@ -1,0 +1,131 @@
+# ═══════════════════════════════════════════════════════════════════
+#  ENTERPRISE AI AGENT — BUSINESS CONFIGURATION
+#  Businesses edit this single file to configure their AI agent.
+# ═══════════════════════════════════════════════════════════════════
+
+company:
+  name: "Pizza Express"
+  industry: "food_delivery"
+
+# ── Agent Personality & LLM ──────────────────────────────────────
+agent:
+  personality: "Friendly, helpful pizza delivery assistant"
+  greeting: "Hi, welcome to Pizza Express! How can I help you today?"
+  llm_provider: groq                     # groq | openai | anthropic
+  llm_model: "meta-llama/llama-4-scout-17b-16e-instruct"
+  stt_model: "whisper-large-v3-turbo"
+  tts_model: "playai-tts"
+  tts_voice: "Fritz-PlayAI"
+  max_voice_results: 5
+  confirm_before_write: true
+
+# ── Data Adapters (plug in your databases) ───────────────────────
+adapters:
+  customers:
+    type: json                           # json | sql | mongodb | rest_api
+    source: "data/customers.json"
+    id_field: "customer_id"
+    search_fields: ["name", "email", "phone"]
+    display_name: "CRM Customers"
+    writable: false
+
+  support_tickets:
+    type: json
+    source: "data/support_tickets.json"
+    id_field: "ticket_id"
+    search_fields: ["subject"]
+    display_name: "Support Tickets"
+    writable: false
+
+  analytics:
+    type: json
+    source: "data/analytics.json"
+    id_field: ""
+    search_fields: ["metric"]
+    display_name: "Analytics"
+    writable: false
+
+  # ── Snowflake Data Source ──────────────────────────────────────
+  snowflake_orders:
+    type: snowflake
+    table: ORDERS
+    id_field: ORDER_ID
+    search_fields: ["CUSTOMER_NAME", "ORDER_STATUS"]
+    display_name: "Snowflake Orders"
+    writable: false
+    account: "${SNOWFLAKE_ACCOUNT}"
+    user: "${SNOWFLAKE_USER}"
+    password: "${SNOWFLAKE_PASSWORD}"
+    warehouse: "${SNOWFLAKE_WAREHOUSE}"
+    database: "${SNOWFLAKE_DATABASE}"
+    schema: "${SNOWFLAKE_SCHEMA}"
+    role: "${SNOWFLAKE_ROLE}"
+
+# ── Authentication ───────────────────────────────────────────────
+auth:
+  required: false                        # Set true to require caller verification
+  strategy: knowledge                    # knowledge | otp | caller_id | none
+  max_attempts: 3
+  challenges:
+    - prompt: "What's the phone number on your account?"
+      match_adapter: customers
+      match_field: phone
+    - prompt: "And what's the email address on your account?"
+      match_adapter: customers
+      match_field: email
+  on_failure: "I wasn't able to verify your identity. Please contact us directly."
+
+# ── Business Rules ───────────────────────────────────────────────
+business_rules:
+  greeting:
+    - condition: "customer.days_since_last_order > 14"
+      action: inject_message
+      message: "Welcome back! It's been a while. Here's a free cookie with your next order!"
+    - condition: "customer.total_orders > 20"
+      action: inject_message
+      message: "Welcome back, VIP! Great to hear from you again."
+
+  guards:
+    - condition: "order.status == 'in_transit'"
+      blocks: "update_order"
+      message: "Sorry, this order is already on the way and cannot be modified."
+    - condition: "order.status == 'delivered'"
+      blocks: "update_order"
+      message: "This order has already been delivered."
+
+  escalation:
+    - condition: "session.auth_attempts >= 3"
+      action: escalate
+      reason: "Too many failed authentication attempts"
+    - condition: "customer.requests_human"
+      action: escalate
+      reason: "Customer requested human agent"
+
+# ── Knowledge Base (RAG sources for FAQ/policies) ────────────────
+knowledge:
+  enabled: false
+  sources: []
+  # Example:
+  # - type: file
+  #   path: "./knowledge/faq.md"
+  # - type: file
+  #   path: "./knowledge/return_policy.pdf"
+
+# ── Escalation / Human Handoff ───────────────────────────────────
+escalation:
+  enabled: false
+  handoff:
+    method: webhook                      # webhook | slack | queue
+    url: "${ESCALATION_WEBHOOK_URL}"
+    include: ["session_summary", "customer_profile", "transcript"]
+  message: "Let me connect you with a team member who can help."
+
+# ── Performance ──────────────────────────────────────────────────
+performance:
+  filler_messages:
+    - "Let me look that up for you..."
+    - "One moment while I check..."
+    - "Give me just a second..."
+  filler_timeout_seconds: 1.5
+  prefetch_after_auth: true
+  cache_ttl_seconds: 300
