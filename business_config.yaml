@@ -63,8 +63,8 @@ adapters:
 
 # ── Authentication ───────────────────────────────────────────────
 auth:
-  required: false                        # Set true to require caller verification
-  strategy: knowledge                    # knowledge | otp | caller_id | none
+  required: true                         # Require caller verification
+  strategy: voice_pin                    # voice_pin | knowledge | otp | none
   max_attempts: 3
   challenges:
     - prompt: "What's the phone number on your account?"
@@ -74,6 +74,20 @@ auth:
       match_adapter: customers
       match_field: email
   on_failure: "I wasn't able to verify your identity. Please contact us directly."
+
+# ── Role-Based Access Control ────────────────────────────────────
+rbac:
+  enabled: true
+  roles:
+    admin:
+      data_sources: ["*"]
+      can_see_all_users: true
+    manager:
+      data_sources: ["customers", "support_tickets", "analytics", "snowflake_orders"]
+      can_see_all_users: true
+    customer:
+      data_sources: ["snowflake_orders", "support_tickets"]
+      can_see_all_users: false
 
 # ── Business Rules ───────────────────────────────────────────────
 business_rules:

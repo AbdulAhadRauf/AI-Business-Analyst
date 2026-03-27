@@ -6,9 +6,11 @@ from typing import Optional, List, Dict, Any
 
 # Mock databases
 MOCK_CUSTOMERS = [
-    {"customer_id": "C001", "name": "Ahad", "phone": "1234567890"},
-    {"customer_id": "C002", "name": "Rahul", "phone": "0987654321"},
-    {"customer_id": "C003", "name": "John", "phone": "5555555555"}
+    {"customer_id": "C001", "name": "Ahad", "phone": "1234567890", "email": "ahad@pizzaexpress.com", "role": "admin"},
+    {"customer_id": "C002", "name": "Rahul", "phone": "0987654321", "email": "rahul@pizzaexpress.com", "role": "manager"},
+    {"customer_id": "C003", "name": "John", "phone": "5555555555", "email": "john@example.com", "role": "customer"},
+    {"customer_id": "C004", "name": "Sarah", "phone": "4444444444", "email": "sarah@example.com", "role": "customer"},
+    {"customer_id": "C005", "name": "Mike", "phone": "6666666666", "email": "mike@example.com", "role": "customer"},
 ]
 
 MOCK_ORDERS = [

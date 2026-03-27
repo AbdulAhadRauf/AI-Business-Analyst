@@ -39,6 +39,11 @@ class Session:
     auth_challenge_index: int = 0           # Which challenge we're on
     pending_auth_field: Optional[str] = None  # Field being verified
 
+    # ── RBAC / Authorization ──────────────────────────────────────
+    user_role: Optional[str] = None          # admin | manager | customer
+    user_phone: Optional[str] = None         # Authenticated user's phone
+    allowed_data_sources: List[str] = field(default_factory=list)  # Sources this user can access
+
     # ── Conversation ──────────────────────────────────────────────
     messages: List[Dict[str, str]] = field(default_factory=list)
     started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

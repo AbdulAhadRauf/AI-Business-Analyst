@@ -162,6 +162,21 @@ class SnowflakeConnector(BaseConnector):
         finally:
             cursor.close()
 
+    def execute_multi_table_sql(self, sql: str, params: Optional[Tuple] = None) -> List[Dict[str, Any]]:
+        """
+        Execute SQL that may reference multiple tables (JOINs).
+
+        Validates that all referenced tables are in the schema registry
+        before executing to prevent SQL injection.
+        """
+        from app.connectors.snowflake_schema_registry import validate_table_names
+
+        if not validate_table_names(sql):
+            logger.error("Multi-table SQL rejected — unknown table in: %s", sql)
+            return [{"error": "Query references unknown tables. Only ORDERS, CUSTOMERS, ORDER_ITEMS are allowed."}]
+
+        return self.execute_sql(sql, params)
+
     def get_tool_definitions(self) -> List[Dict[str, Any]]:
         return [
             {
