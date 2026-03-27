@@ -512,15 +512,19 @@ RULES:
         else:
             raw_data = sf.execute_sql("SELECT * FROM ORDERS LIMIT 10")
 
-    # ── 6. Apply Business Rules ─────────────────────────────────────
-    total_orders = len(raw_data) if raw_data else 0
-    rewards = []
-    if total_orders > 10:
-        rewards.append("20% discount coupon")
-    if any(row.get("ORDER_STATUS", "").lower() == "cancelled" for row in (raw_data or [])) and total_orders > 5:
-        rewards.append("compensation coupon")
+    # ── 6. Apply Business Rules (all 9 categories) ───────────────────
+    from app.services.business_rules import RulesEngine
+    rules_engine = RulesEngine()
+    customer_data = {"name": user_name, "phone": phone, "customer_id": state.get("customer_id", "")}
+    rules_result = rules_engine.evaluate(customer_data, raw_data or [], context={
+        "phone_number": phone,
+        "order_id": order,
+        "intent": state.get("intent", "snowflake"),
+    })
+    rules_context = rules_result.to_prompt_context()
 
     # ── 7. Generate voice-friendly response ─────────────────────────
+    total_orders = len(raw_data) if raw_data else 0
     name = raw_data[0].get("CUSTOMER_NAME", user_name) if raw_data else user_name
 
     responder = ChatGroq(model=settings.GROQ_LLM_MODEL, max_tokens=512)
@@ -532,15 +536,17 @@ SQL used: {sql_query}
 Total results: {total_orders}
 Customer Name: {name}
 User Role: {role}
-Rewards Earned: {rewards}
-Rule 1 applied: IF total_orders > 10 → add "20% discount coupon"
-Rule 2 applied: IF order.status == "cancelled" and total_orders > 5 → give "compensation coupon"
+
+=== BUSINESS RULES CONTEXT ===
+{rules_context}
 
 RULES:
 - Provide a clean conversational answer using the customer's name.
 - DO NOT output markdown or raw SQL.
 - If there are many results, summarize the key highlights.
-- Mention any rewards earned.
+- Mention any rewards, discounts, offers, or suggestions from the business rules context.
+- If the customer has milestone rewards or birthday offers, congratulate them.
+- If fraud flags are triggered, be cautious but don't mention fraud to the customer.
 - If no results, say so politely.
 - Keep it concise for voice delivery."""
 

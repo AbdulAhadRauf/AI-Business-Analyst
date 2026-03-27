@@ -115,6 +115,124 @@ business_rules:
       action: escalate
       reason: "Customer requested human agent"
 
+  # ── Advanced Rules (evaluated by RulesEngine) ──────────────────
+  customer_segmentation:
+    - name: vip_customer
+      condition:
+        total_orders: ">20"
+        total_spent: ">10000"
+      actions:
+        customer_tier: "VIP"
+        benefits: ["priority_support", "faster_delivery", "exclusive_discounts"]
+    - name: frequent_customer
+      condition:
+        orders_last_30_days: ">=5"
+      actions:
+        tag: "Frequent Buyer"
+
+  pricing_and_discounts:
+    - name: high_value_order_discount
+      condition:
+        order_value: ">1000"
+      actions:
+        discount: "10%"
+    - name: first_order_offer
+      condition:
+        total_orders: "==1"
+      actions:
+        discount: "20% welcome coupon"
+    - name: inactive_customer_reactivation
+      condition:
+        last_order_days: ">30"
+      actions:
+        offer: "25% comeback discount"
+
+  delivery_and_operations:
+    - name: delayed_order_compensation
+      condition:
+        delivery_time: ">expected_time"
+      actions:
+        compensation: "free_delivery_next_order"
+    - name: real_time_escalation
+      condition:
+        order_status: "delayed"
+        delay_minutes: ">20"
+      actions:
+        escalate_to_support: true
+
+  cancellation_and_refund:
+    - name: late_cancellation
+      condition:
+        order_status: "preparing"
+      actions:
+        refund_percentage: 80
+    - name: early_cancellation
+      condition:
+        order_status: "placed"
+      actions:
+        refund_percentage: 100
+
+  personalization:
+    - name: favorite_product_suggestion
+      condition:
+        most_ordered_item: "exists"
+      actions:
+        suggest_item: "{{most_ordered_item}}"
+    - name: time_based_suggestion
+      condition:
+        current_time: "evening"
+      actions:
+        suggest_item: "snacks_or_pizza"
+
+  risk_and_fraud:
+    - name: suspicious_activity
+      condition:
+        multiple_orders_short_time: true
+      actions:
+        flag: "possible_fraud"
+    - name: high_refund_frequency
+      condition:
+        refunds_last_10_orders: ">5"
+      actions:
+        restrict_offers: true
+
+  support_automation:
+    - name: auto_resolve_order_status
+      condition:
+        query_type: "order_status"
+      actions:
+        auto_respond: true
+    - name: escalate_angry_customer
+      condition:
+        sentiment: "negative"
+      actions:
+        escalate_to_human: true
+
+  loyalty_and_gamification:
+    - name: milestone_reward
+      condition:
+        total_orders: "==10"
+      actions:
+        reward: "free_item"
+    - name: birthday_offer
+      condition:
+        is_birthday: true
+      actions:
+        offer: "free_dessert"
+
+  context_aware_ai:
+    - name: missing_info
+      condition:
+        phone_number: "missing"
+        order_id: "missing"
+      actions:
+        ask_user: "Please provide your phone number or order ID"
+    - name: smart_tool_trigger
+      condition:
+        intent: ["order_status", "customer_query"]
+      actions:
+        use_snowflake: true
+
 # ── Knowledge Base (RAG sources for FAQ/policies) ────────────────
 knowledge:
   enabled: false
